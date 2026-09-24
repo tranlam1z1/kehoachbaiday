@@ -107,7 +107,7 @@ export async function exportWord(state, week) {
     type: "blob",
     mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   });
-  const filename = `Ke hoach giang day tuan ${week}.docx`;
+  const filename = `KHGD TUẦN ${week}.docx`;
   downloadBlob(blob, filename);
   return filename;
 }

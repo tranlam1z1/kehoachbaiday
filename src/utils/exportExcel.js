@@ -73,7 +73,7 @@ export function exportExcel(state, week) {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, `Tuần ${week}`);
   const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-  const filename = `Ke hoach giang day tuan ${week}.xlsx`;
+  const filename = `KHGD TUẦN ${week}.xlsx`;
   downloadBlob(new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), filename);
   return filename;
 }
