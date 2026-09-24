@@ -36,6 +36,22 @@ export default function PlanTab({ state, week, rows, update, notify, saved }) {
     });
   }
 
+  // Ô đồ dùng gộp theo buổi: sửa một lần áp dụng cho mọi tiết trong buổi
+  function commitMaterials(sessionRows, raw) {
+    const val = raw.trim();
+    update((s) => {
+      const w = ensureWeek(s, week);
+      w.ov ||= {};
+      sessionRows.forEach((row) => {
+        const o = { ...(w.ov[row.key] || {}) };
+        if (val !== "" && val !== row.auto.materials) o.materials = val;
+        else delete o.materials;
+        if (Object.keys(o).length) w.ov[row.key] = o;
+        else delete w.ov[row.key];
+      });
+    });
+  }
+
   function changeMonday(v) {
     if (!v) return;
     update((s) => {
@@ -123,7 +139,16 @@ export default function PlanTab({ state, week, rows, update, notify, saved }) {
                           <td className="center cls">{r.cls}</td>
                           <EditableCell className="lesson" label="Tên bài dạy" value={r.lesson} edited={r.edited.lesson} onCommit={(v) => commit(r, "lesson", v)} />
                           <EditableCell className="ppct" label="Tiết PPCT" numeric value={r.ppct} edited={r.edited.ppct} onCommit={(v) => commit(r, "ppct", v)} />
-                          <EditableCell className="mat" label="Đồ dùng dạy học" value={r.materials} edited={r.edited.materials} onCommit={(v) => commit(r, "materials", v)} />
+                          {i === 0 && (
+                            <EditableCell
+                              className="mat"
+                              label="Đồ dùng dạy học"
+                              rowSpan={s.rows.length}
+                              value={r.materials}
+                              edited={s.rows.some((x) => x.edited.materials)}
+                              onCommit={(v) => commitMaterials(s.rows, v)}
+                            />
+                          )}
                           <EditableCell className="nls" label="Nội dung tích hợp" value={r.nls} edited={r.edited.nls} onCommit={(v) => commit(r, "nls", v)} />
                         </tr>
                       );

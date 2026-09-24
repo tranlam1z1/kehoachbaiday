@@ -13,7 +13,10 @@ const FONT = '<w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs
 
 function run(text, o = {}) {
   const sz = o.sz || 26; // cỡ chữ tính theo nửa point: 26 = 13pt
-  return `<w:r><w:rPr>${FONT}${o.b ? "<w:b/>" : ""}${o.i ? "<w:i/>" : ""}<w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/></w:rPr><w:t xml:space="preserve">${xesc(text)}</w:t></w:r>`;
+  return `<w:r><w:rPr>${FONT}${o.b ? "<w:b/>" : ""}${o.i ? "<w:i/>" : ""}<w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/></w:rPr>${String(text ?? "")
+    .split("\n")
+    .map((t) => `<w:t xml:space="preserve">${xesc(t)}</w:t>`)
+    .join("<w:br/>")}</w:r>`;
 }
 
 function para(runs, o = {}) {
@@ -31,7 +34,7 @@ export function buildDocxParts(state, week) {
   const cfg = state.config;
   const rows = buildRows(state, week);
   const rg = weekRange(rows, state, week);
-  const W = [1100, 700, 550, 550, 3300, 800, 1800, 1122]; // độ rộng cột (dxa), tổng = 9922
+  const W = [750, 700, 550, 550, 3650, 800, 1800, 1122]; // độ rộng cột (dxa), tổng = 9922
   const TW = W.reduce((a, b) => a + b, 0);
   const borders = (val) =>
     ["top", "left", "bottom", "right", "insideH", "insideV"]
@@ -60,14 +63,14 @@ export function buildDocxParts(state, week) {
       s.rows.forEach((r, i) => {
         x += "<w:tr><w:trPr><w:cantSplit/></w:trPr>";
         x += firstOfDay
-          ? cell(`${DAYS_UPPER[day.d]} ${ddmm(day.date)}`, W[0], { b: true, jc: "center", vm: "restart" })
+          ? cell(`${DAYS_UPPER[day.d].replace(" ", "\n")}\n${ddmm(day.date)}`, W[0], { b: true, jc: "center", vm: "restart" })
           : cell("", W[0], { vm: "cont" });
         x += i === 0 ? cell(s.label, W[1], { jc: "center", vm: "restart" }) : cell("", W[1], { vm: "cont" });
         x += cell(r.period, W[2], { jc: "center" });
         x += cell(r.cls, W[3], { jc: "center" });
         x += cell(r.lesson, W[4]);
         x += cell(r.ppct, W[5], { jc: "center" });
-        x += cell(r.materials, W[6]);
+        x += i === 0 ? cell(r.materials, W[6], { jc: "center", vm: "restart" }) : cell("", W[6], { vm: "cont" });
         x += cell(r.nls, W[7], { jc: "center" });
         x += "</w:tr>";
         firstOfDay = false;

@@ -1,4 +1,4 @@
-import * as XLSX from "xlsx";
+import * as XLSX from "xlsx-js-style";
 import { DAYS_UPPER } from "../data/defaultState.js";
 import { buildRows, weekRange, groupRows } from "./plan.js";
 import { ddmm, ddmmyyyy } from "./date.js";
@@ -12,6 +12,7 @@ export function buildSheet(state, week) {
   const aoa = [];
   const merges = [];
   const merge = (r1, c1, r2, c2) => merges.push({ s: { r: r1, c: c1 }, e: { r: r2, c: c2 } });
+  const centered = []; // các ô thứ ngày và đồ dùng dạy học cần căn giữa, tự xuống dòng
 
   aoa.push([cfg.school, "", "", "", "", "", "", `Năm học: ${cfg.year}`]);
   merge(0, 0, 0, 4);
@@ -24,21 +25,26 @@ export function buildSheet(state, week) {
 
   groupRows(rows).forEach((day) => {
     const dayStart = aoa.length;
+    centered.push(XLSX.utils.encode_cell({ r: dayStart, c: 0 }));
     day.sessions.forEach((s) => {
       const sessionStart = aoa.length;
+      centered.push(XLSX.utils.encode_cell({ r: sessionStart, c: 6 }));
       s.rows.forEach((r, i) =>
         aoa.push([
-          aoa.length === dayStart ? `${DAYS_UPPER[day.d]} ${ddmm(day.date)}` : "",
+          aoa.length === dayStart ? `${DAYS_UPPER[day.d].replace(" ", "\n")}\n${ddmm(day.date)}` : "",
           i === 0 ? s.label : "",
           r.period,
           r.cls,
           r.lesson,
           r.ppct === "" ? "" : Number(r.ppct),
-          r.materials,
+          i === 0 ? r.materials : "",
           r.nls,
         ])
       );
-      if (s.rows.length > 1) merge(sessionStart, 1, aoa.length - 1, 1);
+      if (s.rows.length > 1) {
+        merge(sessionStart, 1, aoa.length - 1, 1);
+        merge(sessionStart, 6, aoa.length - 1, 6);
+      }
     });
     if (aoa.length - dayStart > 1) merge(dayStart, 0, aoa.length - 1, 0);
   });
@@ -53,12 +59,15 @@ export function buildSheet(state, week) {
   merge(sr + 4, 0, sr + 4, 4);
   merge(sr + 4, 5, sr + 4, 7);
 
-  return { aoa, merges, cols: [14, 8, 6, 6, 44, 10, 30, 22].map((wch) => ({ wch })) };
+  return { aoa, merges, centered, cols: [8, 8, 6, 6, 50, 10, 30, 22].map((wch) => ({ wch })) };
 }
 
 export function exportExcel(state, week) {
-  const { aoa, merges, cols } = buildSheet(state, week);
+  const { aoa, merges, centered, cols } = buildSheet(state, week);
   const ws = XLSX.utils.aoa_to_sheet(aoa);
+  centered.forEach((ref) => {
+    if (ws[ref]) ws[ref].s = { alignment: { horizontal: "center", vertical: "center", wrapText: true } };
+  });
   ws["!merges"] = merges;
   ws["!cols"] = cols;
   const wb = XLSX.utils.book_new();

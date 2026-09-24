@@ -1,8 +1,8 @@
 // Ô nhập liệu chỉ ghi nhận khi rời ô hoặc nhấn Enter; Esc để hủy
-export default function EditableCell({ value, edited, className, label, numeric, onCommit }) {
+export default function EditableCell({ value, edited, className, label, numeric, rowSpan, onCommit }) {
   const text = String(value ?? "");
   return (
-    <td className={`${className}${edited ? " edited" : ""}`}>
+    <td className={`${className}${edited ? " edited" : ""}`} rowSpan={rowSpan}>
       <input
         key={text}
         defaultValue={text}
