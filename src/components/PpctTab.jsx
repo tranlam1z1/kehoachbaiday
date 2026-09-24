@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { PPCT } from "../data/ppct.js";
 
+const GRADES = Object.keys(PPCT).map(Number);
+
 export default function PpctTab() {
   const [grade, setGrade] = useState(1);
   const P = PPCT[grade];
@@ -10,7 +12,7 @@ export default function PpctTab() {
     <section>
       <div className="toolbar">
         <div className="seg">
-          {[1, 2, 3].map((g) => (
+          {GRADES.map((g) => (
             <button key={g} aria-pressed={g === grade} onClick={() => setGrade(g)}>
               Lớp {g}
             </button>

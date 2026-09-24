@@ -1,15 +1,15 @@
-// Phân phối chương trình Tiếng Anh lớp 1, 2, 3 — năm học 2026-2027
-// Mã NLS viết gọn: "1.1" = "1.1.CB1a", "2.2b" = "2.2.CB1b". Mã đầy đủ (có "CB") giữ nguyên.
+// Phân phối chương trình Tiếng Anh lớp 1, 2, 3, 4 — năm học 2026-2027
+// Mã NLS viết gọn: "1.1" = "1.1.CB1a", "2.2b" = "2.2.CB1b" (lớp 4 dùng CB2). Mã đầy đủ (có "CB") giữ nguyên.
 
-export function expandNls(tokens) {
+export function expandNls(tokens, level = 1) {
   return tokens
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean)
     .map((t) => {
       if (/CB/.test(t)) return t;
-      const m = t.match(/^(\d\.\d)([abc])?$/);
-      return m ? `${m[1]}.CB1${m[2] || "a"}` : t;
+      const m = t.match(/^(\d\.\d)([abcd])?$/);
+      return m ? `${m[1]}.CB${level}${m[2] || "a"}` : t;
     })
     .join(", ");
 }
@@ -111,10 +111,58 @@ function buildGrade3() {
   return out;
 }
 
+// Global Success 4 (140 tiết), mã NLS mức CB2
+function buildGrade4() {
+  const out = [];
+  const push = (name, code, short) => out.push({ name, short, nls: expandNls(code, 2) });
+  const L = ["Lesson 1 (1,2,3)", "Lesson 1 (4,5,6)", "Lesson 2 (1,2,3)", "Lesson 2 (4,5,6)", "Lesson 3 (1,2,3)", "Lesson 3 (4,5,6)"];
+  const unit = (n, title, codes) => codes.split("|").forEach((c, i) => push(`Unit ${n}: ${title} – ${L[i]}`, c, `Unit ${n}: ${L[i]}`));
+  const review = (n, a, b, e) => {
+    push(`Review ${n}: Part 1`, a);
+    push(`Review ${n}: Part 2`, b);
+    push(`Review ${n}: Extension activities`, e);
+  };
+
+  push("Làm quen chương trình SGK lớp 4", "1.1a");
+  push("Starter: A. Hello again", "2.5a");
+  push("Starter: B. Classroom activities", "2.5a");
+  push("Starter: C. Outdoor activities", "2.5a");
+  unit(1, "My friends", "1.1b|2.1a|2.1b|1.2a|1.1c|3.1a");
+  unit(2, "Time and daily routines", "1.1a|2.2a|2.1b|1.2a|1.1d|3.1b");
+  unit(3, "My week", "1.3b|3.2a|2.1a|5.2c|1.1c|2.4a");
+  unit(4, "My birthday party", "1.1b|4.2a|2.1b|1.2a|1.1d|3.1a");
+  unit(5, "Things we can do", "1.1b|2.6a|2.1a|1.2a|1.1c|2.2b");
+  review(1, "1.3a", "5.4a", "2.3b");
+  unit(6, "School facilities", "1.1a|4.1a|2.3a|1.2a|1.1d|3.1b");
+  unit(7, "School timetable", "1.1b|1.3b|2.1b|5.2b|1.1c|3.2a");
+  unit(8, "My favourite subjects", "1.1a|2.6c|2.1a|1.2a|1.1d|2.4a");
+  unit(9, "Our sports day", "1.1b|4.3b|2.1b|1.2a|1.1c|3.1a");
+  unit(10, "Our summer holidays", "1.1a|2.2a|2.1a|1.2a|1.1d|2.4a");
+  review(2, "1.3a", "5.2a", "2.3b");
+  push("Kiểm tra học kì I: Làm bài kiểm tra", "5.1a");
+  push("Kiểm tra học kì I: Chữa bài", "5.4b");
+  unit(11, "My home", "1.1a|2.1a|2.1b|1.2a|1.1d|3.1a");
+  unit(12, "Jobs", "1.1b|2.2a|2.5c|1.2a|1.1c|3.1b");
+  unit(13, "Appearance", "1.1b|4.2a|2.1b|3.2a|1.1d|2.4a");
+  unit(14, "Daily activities", "1.1a|1.3b|2.1a|1.2a|1.1c|3.1a");
+  unit(15, "My family's weekends", "1.1b|4.3a|2.2b|5.2b|1.1d|3.1b");
+  review(3, "1.3a", "5.4a", "2.3b");
+  unit(16, "Weather", "1.1b|4.4a|2.1b|1.2a|1.1c|3.2a");
+  unit(17, "In the city", "1.1a|2.5a|2.3a|1.2a|1.1d|2.4a");
+  unit(18, "At the shopping centre", "1.1b|4.1b|2.1a|1.2a|1.1c|3.1a");
+  unit(19, "The animal world", "1.1a|4.4a|2.5c|1.2a|1.1d|3.1b");
+  unit(20, "At summer camp", "1.1b|2.6b|2.1b|1.3b|1.1c|2.4a");
+  review(4, "1.3a", "5.4a", "3.2a");
+  push("Kiểm tra học kì II: Làm bài kiểm tra", "5.1a");
+  push("Kiểm tra học kì II: Chữa bài", "5.4b");
+  return out;
+}
+
 export const PPCT = {
   1: { book: "Global Success 1", perWeek: 2, items: buildGlobalSuccess(G1_UNITS, G1_CODES, "4,5", false) },
   2: { book: "Global Success 2", perWeek: 2, items: buildGlobalSuccess(G2_UNITS, G2_CODES, "4,5,6", true) },
   3: { book: "Wonderful World 3", perWeek: 4, items: buildGrade3() },
+  4: { book: "Global Success 4", perWeek: 4, items: buildGrade4() },
 };
 
 // Khối được lấy theo chữ số đầu của tên lớp: "3A" -> 3

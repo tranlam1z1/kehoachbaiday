@@ -1,7 +1,7 @@
 # Kế hoạch giảng dạy Tiếng Anh (React)
 
-Ứng dụng lập kế hoạch giảng dạy theo tuần cho môn Tiếng Anh lớp 1, 2, 3
-(Global Success 1, Global Success 2, Wonderful World 3), xuất ra Word (.docx) và Excel (.xlsx).
+Ứng dụng lập kế hoạch giảng dạy theo tuần cho môn Tiếng Anh lớp 1, 2, 3, 4
+(Global Success 1, Global Success 2, Wonderful World 3, Global Success 4), xuất ra Word (.docx) và Excel (.xlsx).
 
 ## Yêu cầu
 - Node.js 18 trở lên
