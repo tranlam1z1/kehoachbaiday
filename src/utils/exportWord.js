@@ -34,7 +34,7 @@ export function buildDocxParts(state, week) {
   const cfg = state.config;
   const rows = buildRows(state, week);
   const rg = weekRange(rows, state, week);
-  const W = [750, 700, 550, 550, 3650, 800, 1800, 1122]; // độ rộng cột (dxa), tổng = 9922
+  const W = [750, 850, 700, 700, 3200, 800, 1800, 1122]; // độ rộng cột (dxa), tổng = 9922
   const TW = W.reduce((a, b) => a + b, 0);
   const borders = (val) =>
     ["top", "left", "bottom", "right", "insideH", "insideV"]

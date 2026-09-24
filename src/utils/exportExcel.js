@@ -59,7 +59,7 @@ export function buildSheet(state, week) {
   merge(sr + 4, 0, sr + 4, 4);
   merge(sr + 4, 5, sr + 4, 7);
 
-  return { aoa, merges, centered, cols: [8, 8, 6, 6, 50, 10, 30, 22].map((wch) => ({ wch })) };
+  return { aoa, merges, centered, cols: [8, 10, 8, 8, 44, 10, 30, 22].map((wch) => ({ wch })) };
 }
 
 export function exportExcel(state, week) {
