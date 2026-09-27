@@ -1,10 +1,10 @@
 import * as XLSX from "xlsx-js-style";
 import JSZip from "jszip";
 import { DAYS_UPPER } from "../data/defaultState.js";
-import { buildRows, weekRange, groupRows } from "./plan.js";
-import { ddmm, ddmmyyyy } from "./date.js";
+import { buildRows, groupRows } from "./plan.js";
+import { ddmm } from "./date.js";
 import { downloadBlob } from "./download.js";
-import { DEFAULT_EXPORT_OPTIONS, normalizeExportOptions, planColumns, fitWidths } from "./exportOptions.js";
+import { DEFAULT_EXPORT_OPTIONS, normalizeExportOptions, planColumns, fitWidths, schoolYearLine } from "./exportOptions.js";
 
 // Tổng độ rộng cột (số ký tự) theo hướng giấy; khi in được thu nhỏ vừa 1 trang theo chiều ngang
 const TOTAL_WCH = { portrait: 140, landscape: 207 };
@@ -18,7 +18,6 @@ export function buildSheet(state, week, options = DEFAULT_EXPORT_OPTIONS) {
   const opts = normalizeExportOptions(options);
   const cfg = state.config;
   const rows = buildRows(state, week);
-  const rg = weekRange(rows, state, week);
   const cols = planColumns(opts);
   const last = cols.length - 1;
   const col = (key) => cols.findIndex((c) => c.key === key);
@@ -46,7 +45,7 @@ export function buildSheet(state, week, options = DEFAULT_EXPORT_OPTIONS) {
   merge(aoa.length, 0, aoa.length, last);
   aoa.push([`KẾ HOẠCH GIẢNG DẠY TUẦN ${week}`]);
   merge(aoa.length, 0, aoa.length, last);
-  aoa.push([`(Từ ngày ${ddmmyyyy(rg.from)} đến ngày ${ddmmyyyy(rg.to)})`]);
+  aoa.push([schoolYearLine(cfg.year)]);
   aoa.push([]);
   aoa.push(cols.map((c) => c.title));
 

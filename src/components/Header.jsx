@@ -9,7 +9,15 @@ const SCOPES = [
   { value: "year", label: "Cả năm" },
 ];
 
-export default function Header({ config, week, maxWeek, range, onWeekChange, scope, onScopeChange, onExportWord, onExportExcel }) {
+// Bấm nút giao diện để đổi lần lượt: tự động -> sáng -> tối
+const THEMES = {
+  auto: { icon: "◐", label: "Tự động", next: "light" },
+  light: { icon: "☀", label: "Sáng", next: "dark" },
+  dark: { icon: "☾", label: "Tối", next: "auto" },
+};
+
+export default function Header({ config, week, maxWeek, range, onWeekChange, scope, onScopeChange, onExportWord, onExportExcel, theme, onThemeChange }) {
+  const th = THEMES[theme] || THEMES.auto;
   const setScope = (patch) => onScopeChange({ ...scope, ...patch });
 
   const [draft, setDraft] = useState(String(week));
@@ -17,6 +25,15 @@ export default function Header({ config, week, maxWeek, range, onWeekChange, sco
 
   return (
     <header className="sheet">
+      <button
+        type="button"
+        className="theme-btn"
+        aria-label={`Giao diện: ${th.label}. Bấm để chuyển sang ${THEMES[th.next].label.toLowerCase()}.`}
+        title={theme === "auto" ? "Tự động theo cài đặt sáng/tối của máy" : undefined}
+        onClick={() => onThemeChange(th.next)}
+      >
+        <span aria-hidden="true">{th.icon}</span> {th.label}
+      </button>
       <p className="school">
         {config.school}, năm học {config.year}
       </p>

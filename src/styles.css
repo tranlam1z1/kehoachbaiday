@@ -6,6 +6,7 @@
   --hand:"Patrick Hand","Comic Sans MS",cursive;
   --ui:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   box-sizing:border-box;
+  color-scheme:light dark;
   padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
 }
 @media (prefers-color-scheme:dark){
@@ -15,7 +16,9 @@
     --grid:rgba(150,170,255,.06); --grid-strong:rgba(150,170,255,.13); --margin:rgba(240,120,135,.45);
   }
 }
+:root[data-theme="light"]{color-scheme:light}
 :root[data-theme="dark"]{
+  color-scheme:dark;
   --paper:#15161C; --surface:#1D1F27; --text:#E6E7EE; --muted:#9EA2B2; --line:#343747;
   --ink:#B9A6F0; --ink-soft:#2A2440; --ink-on:#1A1330; --red:#F07A86; --red-soft:#3A1E24;
   --grid:rgba(150,170,255,.06); --grid-strong:rgba(150,170,255,.13); --margin:rgba(240,120,135,.45);
@@ -39,7 +42,10 @@ button,input,select{font:inherit;color:inherit}
   padding:22px 20px 18px 76px;
 }
 .sheet::before{content:"";position:absolute;top:0;bottom:0;left:56px;width:2px;background:var(--margin)}
-.school{color:var(--muted);font-size:13px;margin:0}
+.school{color:var(--muted);font-size:13px;margin:0;padding-right:110px}
+.theme-btn{position:absolute;top:14px;right:16px;display:flex;align-items:center;gap:6px;min-height:36px;padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--text);font-size:13px;cursor:pointer}
+.theme-btn span{color:var(--ink);font-size:15px}
+.theme-btn:hover{background:var(--ink-soft)}
 .head-row{display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 28px;margin-top:4px}
 h1{font-family:var(--hand);font-weight:400;color:var(--ink);font-size:clamp(30px,5vw,44px);line-height:1.05;margin:0}
 .week-nav{display:flex;align-items:center;gap:6px}

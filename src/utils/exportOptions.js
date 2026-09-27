@@ -24,6 +24,9 @@ const COLUMNS = [
   { key: "nls", title: "Nội dung tích hợp" },
 ];
 
+// Dòng dưới tiêu đề khi xuất file: "2026-2027" -> "Năm học 2026 - 2027"
+export const schoolYearLine = (year) => `Năm học ${String(year ?? "").trim().replace(/\s*[-–]\s*/, " - ")}`;
+
 // Các cột của bảng kế hoạch theo tùy chọn
 export function planColumns(opts) {
   return COLUMNS.filter((c) => c.key !== "nls" || opts.showNls);

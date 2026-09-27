@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { defaultState, mergeState } from "./data/defaultState.js";
 import { usePersistentState } from "./hooks/usePersistentState.js";
 import { buildRows, weekRange } from "./utils/plan.js";
@@ -47,6 +47,12 @@ export default function App() {
   const [dialog, setDialog] = useState(null); // "word" | "excel" khi đang mở hộp thoại tùy chọn xuất
   const closeDialog = useCallback(() => setDialog(null), []);
   const [tab, setTab] = useState("plan");
+  // Giao diện: "auto" theo máy, "light" sáng, "dark" tối
+  const [theme, setTheme] = usePersistentState("khgd-theme", "auto", (t) => (t === "light" || t === "dark" ? t : "auto"));
+  useEffect(() => {
+    if (theme === "auto") document.documentElement.removeAttribute("data-theme");
+    else document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
   const [toast, notify] = useToast();
 
   // Cập nhật state theo kiểu "sửa trên bản sao"
@@ -90,6 +96,8 @@ export default function App() {
         onScopeChange={setScope}
         onExportWord={() => setDialog("word")}
         onExportExcel={() => setDialog("excel")}
+        theme={theme}
+        onThemeChange={setTheme}
       />
       <Tabs tabs={TABS} active={tab} onChange={setTab} />
       <main>
