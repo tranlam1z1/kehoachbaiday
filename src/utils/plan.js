@@ -1,6 +1,7 @@
 import { PPCT, PRACTICE_LESSON, gradeOf, isPractice } from "../data/ppct.js";
 import { DAYS, SESSIONS, slotKey } from "../data/defaultState.js";
 import { parseDate, addDays } from "./date.js";
+import { defaultNames, formatMaterials, orderByList, overrideNames, sameSet } from "./materials.js";
 
 // Thứ Hai của tuần: mặc định = tuần trước + 7 ngày, trừ khi tuần đó được đặt ngày riêng (ví dụ sau Tết)
 export function mondayOf(state, week) {
@@ -21,6 +22,7 @@ export function buildRows(state, week) {
   const offsets = {};
   cfg.classes.forEach((c) => (offsets[c.name] = Number(c.offset) || 0));
 
+  const defaultMaterials = defaultNames(cfg);
   const count = {};
   const rows = [];
   DAYS.forEach((_, d) =>
@@ -43,8 +45,12 @@ export function buildRows(state, week) {
           // Kế hoạch dùng tên gọn "Unit 1: Lesson 1 (1,2)"; bảng PPCT vẫn giữ tên đầy đủ
           lesson: practice ? PRACTICE_LESSON : item ? item.short || item.name : "",
           nls: item ? item.nls : "",
-          materials: cfg.materials,
+          materials: defaultMaterials,
         };
+
+        // Đồ dùng: mảng tên đã chọn; chuỗi gõ tay kiểu cũ được giữ nguyên khi xuất file
+        const matOv = o.materials;
+        const materials = matOv == null ? defaultMaterials : orderByList(overrideNames(matOv), cfg.materialList);
 
         rows.push({
           key,
@@ -61,8 +67,9 @@ export function buildRows(state, week) {
           ppct: ppct == null ? "" : ppct,
           lesson: o.lesson ?? auto.lesson,
           nls: o.nls ?? auto.nls,
-          materials: o.materials ?? auto.materials,
-          edited: { ppct: hasPpctOv, lesson: o.lesson != null, nls: o.nls != null, materials: o.materials != null },
+          materials,
+          materialsText: typeof matOv === "string" ? matOv : formatMaterials(materials),
+          edited: { ppct: hasPpctOv, lesson: o.lesson != null, nls: o.nls != null, materials: matOv != null && !sameSet(materials, defaultMaterials) },
           outOfRange: !!g && (ppct < 1 || ppct > PPCT[g].items.length),
         });
       }

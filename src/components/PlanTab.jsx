@@ -1,14 +1,19 @@
-import { Fragment } from "react";
+import { Fragment, useCallback, useState } from "react";
 import { DAYS } from "../data/defaultState.js";
 import { groupRows, mondayOf } from "../utils/plan.js";
 import { ddmm, parseDate, toIso } from "../utils/date.js";
 import EditableCell from "./EditableCell.jsx";
+import MaterialsPicker, { MaterialsCell } from "./MaterialsPicker.jsx";
+import { defaultNames, sameName, setSlotMaterials } from "../utils/materials.js";
 
 const ensureWeek = (s, week) => (s.weeks[week] ||= { monday: "", ov: {} });
 
-export default function PlanTab({ state, week, rows, update, notify, saved }) {
+export default function PlanTab({ state, week, maxWeek, rows, update, notify, saved }) {
   const days = groupRows(rows);
   const overrides = (state.weeks[week] && state.weeks[week].ov) || {};
+  const [picking, setPicking] = useState(null); // khóa tiết đang mở hộp thoại chọn đồ dùng
+  const closePicker = useCallback(() => setPicking(null), []);
+  const pickingRow = rows.find((r) => r.key === picking);
 
   function commit(row, field, raw) {
     const val = raw.trim();
@@ -36,20 +41,29 @@ export default function PlanTab({ state, week, rows, update, notify, saved }) {
     });
   }
 
-  // Ô đồ dùng gộp theo buổi: sửa một lần áp dụng cho mọi tiết trong buổi
-  function commitMaterials(sessionRows, raw) {
-    const val = raw.trim();
+  // Phạm vi áp dụng đồ dùng khi chọn cho một tiết. Thời khóa biểu giống nhau mọi tuần nên
+  // "cả năm" = các tiết của tuần đang xem, lặp lại ở tuần 1 đến tuần cuối
+  function materialScopes(row) {
+    const sessionRows = rows.filter((x) => x.d === row.d && x.session === row.session);
+    const all = Array.from({ length: maxWeek }, (_, i) => i + 1);
+    return [
+      { value: "one", label: "Chỉ tiết này", targets: [[week, [row.key]]] },
+      { value: "session", label: `Các tiết cùng buổi (${sessionRows.length} tiết)`, targets: [[week, sessionRows.map((x) => x.key)]] },
+      { value: "week", label: `Cả tuần ${week} (${rows.length} tiết)`, targets: [[week, rows.map((x) => x.key)]] },
+      { value: "year", label: `Cả năm học, tuần 1–${maxWeek} (${rows.length * maxWeek} tiết)`, targets: all.map((w) => [w, rows.map((x) => x.key)]) },
+    ];
+  }
+
+  // Đồ dùng cho các tiết trong phạm vi đã chọn; toAdd = đồ dùng riêng cần lưu thêm vào danh sách
+  function commitMaterials(scope, names, toAdd) {
+    setPicking(null);
     update((s) => {
-      const w = ensureWeek(s, week);
-      w.ov ||= {};
-      sessionRows.forEach((row) => {
-        const o = { ...(w.ov[row.key] || {}) };
-        if (val !== "" && val !== row.auto.materials) o.materials = val;
-        else delete o.materials;
-        if (Object.keys(o).length) w.ov[row.key] = o;
-        else delete w.ov[row.key];
-      });
+      const list = s.config.materialList;
+      toAdd.forEach((name) => !list.some((m) => sameName(m.name, name)) && list.push({ name, isDefault: false }));
+      scope.targets.forEach(([w, keys]) => keys.forEach((key) => setSlotMaterials(s, w, key, names)));
     });
+    const n = scope.targets.reduce((a, [, keys]) => a + keys.length, 0);
+    if (n > 1) notify(`Đã áp dụng đồ dùng cho ${n} tiết.`);
   }
 
   function changeMonday(v) {
@@ -139,16 +153,7 @@ export default function PlanTab({ state, week, rows, update, notify, saved }) {
                           <td className="center cls">{r.cls}</td>
                           <EditableCell className="lesson" label="Tên bài dạy" value={r.lesson} edited={r.edited.lesson} onCommit={(v) => commit(r, "lesson", v)} />
                           <EditableCell className="ppct" label="Tiết PPCT" numeric value={r.ppct} edited={r.edited.ppct} onCommit={(v) => commit(r, "ppct", v)} />
-                          {i === 0 && (
-                            <EditableCell
-                              className="mat"
-                              label="Đồ dùng dạy học"
-                              rowSpan={s.rows.length}
-                              value={r.materials}
-                              edited={s.rows.some((x) => x.edited.materials)}
-                              onCommit={(v) => commitMaterials(s.rows, v)}
-                            />
-                          )}
+                          <MaterialsCell row={r} onOpen={() => setPicking(r.key)} />
                           <EditableCell className="nls" label="Nội dung tích hợp" value={r.nls} edited={r.edited.nls} onCommit={(v) => commit(r, "nls", v)} />
                         </tr>
                       );
@@ -162,7 +167,7 @@ export default function PlanTab({ state, week, rows, update, notify, saved }) {
       </div>
 
       <p className="legend">
-        Ô chữ <span>đỏ</span> là ô cô đã sửa tay. Sửa số tiết PPCT thì tên bài và mã NLS tự đổi theo.
+        Ô chữ <span>đỏ</span> là ô cô đã sửa tay. Sửa số tiết PPCT thì tên bài và mã NLS tự đổi theo. Bấm ô đồ dùng dạy học để chọn đồ dùng cho từng tiết.
       </p>
       {notes.length > 0 && (
         <ul className="notes">
@@ -170,6 +175,17 @@ export default function PlanTab({ state, week, rows, update, notify, saved }) {
             <li key={n}>{n}</li>
           ))}
         </ul>
+      )}
+      {pickingRow && (
+        <MaterialsPicker
+          key={pickingRow.key}
+          row={pickingRow}
+          list={state.config.materialList}
+          defaults={defaultNames(state.config)}
+          scopes={materialScopes(pickingRow)}
+          onSave={commitMaterials}
+          onCancel={closePicker}
+        />
       )}
     </section>
   );

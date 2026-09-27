@@ -3,6 +3,7 @@ import { DAYS_UPPER } from "../data/defaultState.js";
 import { buildRows, weekRange, groupRows } from "./plan.js";
 import { ddmm, ddmmyyyy } from "./date.js";
 import { downloadBlob } from "./download.js";
+import { DEFAULT_EXPORT_OPTIONS, normalizeExportOptions, planColumns, fitWidths } from "./exportOptions.js";
 
 // Tạo file .docx bằng cách tự viết WordprocessingML rồi nén bằng JSZip
 
@@ -30,49 +31,72 @@ function cell(content, width, o = {}) {
   return `<w:tc><w:tcPr><w:tcW w:w="${width}" w:type="dxa"/>${vMerge}${shade}<w:vAlign w:val="center"/></w:tcPr>${body}</w:tc>`;
 }
 
+// Khổ A4 (dxa), lề trái 2cm, lề phải 1,5cm
+const PAGE = { portrait: { w: 11906, h: 16838 }, landscape: { w: 16838, h: 11906 } };
+const MARGIN = { top: 1134, right: 850, bottom: 1134, left: 1134 };
+
+// Độ rộng cột (dxa): cột hẹp cố định, "Đồ dùng dạy học" và "Nội dung tích hợp" theo tỉ lệ phần còn lại
+const SIZES = {
+  fixed: { day: 750, session: 850, period: 700, cls: 700, ppct: 800 },
+  share: { materials: 0.26, nls: 0.16 },
+};
+
 // Nội dung một tuần: tiêu đề, bảng kế hoạch, phần ký tên
-function weekBody(state, week) {
+function weekBody(state, week, opts) {
   const cfg = state.config;
   const rows = buildRows(state, week);
   const rg = weekRange(rows, state, week);
-  const W = [750, 850, 700, 700, 3200, 800, 1800, 1122]; // độ rộng cột (dxa), tổng = 9922
-  const TW = W.reduce((a, b) => a + b, 0);
+  const TW = PAGE[opts.orientation].w - MARGIN.left - MARGIN.right; // bề ngang vùng in
+  const cols = planColumns(opts);
+  const W = fitWidths(cols, TW, SIZES);
   const borders = (val) =>
     ["top", "left", "bottom", "right", "insideH", "insideV"]
       .map((k) => (val === "nil" ? `<w:${k} w:val="nil"/>` : `<w:${k} w:val="single" w:sz="4" w:space="0" w:color="000000"/>`))
       .join("");
 
   let x = "";
-  x += para(run(cfg.school) + "<w:r><w:tab/></w:r>" + run(`Năm học: ${cfg.year}`), {
-    tabs: `<w:tabs><w:tab w:val="right" w:pos="${TW}"/></w:tabs>`,
-  });
-  x += para(run(`KẾ HOẠCH GIẢNG DẠY TUẦN ${week}`, { b: true, sz: 30 }), { jc: "center", before: 240 });
+  // Dòng đầu trang: tên trường bên trái, năm học bên phải
+  const topLine = opts.showSchool || opts.showYear;
+  if (topLine) {
+    x += para(
+      (opts.showSchool ? run(cfg.school) : "") + (opts.showYear ? "<w:r><w:tab/></w:r>" + run(`Năm học: ${cfg.year}`) : ""),
+      { tabs: `<w:tabs><w:tab w:val="right" w:pos="${TW}"/></w:tabs>` }
+    );
+  }
+  x += para(run(`KẾ HOẠCH GIẢNG DẠY TUẦN ${week}`, { b: true, sz: 30 }), { jc: "center", before: topLine ? 240 : 0 });
   x += para(run(`(Từ ngày ${ddmmyyyy(rg.from)} đến ngày ${ddmmyyyy(rg.to)})`, { i: true }), { jc: "center", after: 200 });
 
-  const header = ["Thứ ngày", "Buổi", "Tiết", "Lớp", "Tên bài dạy", "Tiết theo PPCT", "Đồ dùng dạy học", "Nội dung tích hợp"];
   x += `<w:tbl><w:tblPr><w:tblW w:w="${TW}" w:type="dxa"/><w:tblLayout w:type="fixed"/><w:tblBorders>${borders()}</w:tblBorders><w:tblCellMar><w:left w:w="70" w:type="dxa"/><w:right w:w="70" w:type="dxa"/></w:tblCellMar></w:tblPr>`;
   x += `<w:tblGrid>${W.map((w) => `<w:gridCol w:w="${w}"/>`).join("")}</w:tblGrid>`;
-  x += `<w:tr><w:trPr><w:tblHeader/></w:trPr>${header.map((h, i) => cell(h, W[i], { b: true, jc: "center", shade: "F2F2F2" })).join("")}</w:tr>`;
+  x += `<w:tr><w:trPr><w:tblHeader/></w:trPr>${cols.map((c, i) => cell(c.title, W[i], { b: true, jc: "center", shade: "F2F2F2" })).join("")}</w:tr>`;
 
   if (!rows.length) {
-    x += `<w:tr>${W.map((w, i) => cell(i === 4 ? "(Chưa có tiết nào trong thời khóa biểu)" : "", w)).join("")}</w:tr>`;
+    x += `<w:tr>${W.map((w, i) => cell(cols[i].key === "lesson" ? "(Chưa có tiết nào trong thời khóa biểu)" : "", w)).join("")}</w:tr>`;
   }
 
   groupRows(rows).forEach((day) => {
     let firstOfDay = true;
     day.sessions.forEach((s) =>
       s.rows.forEach((r, i) => {
+        const tc = {
+          day: (w) =>
+            firstOfDay
+              ? cell(`${DAYS_UPPER[day.d].replace(" ", "\n")}\n${ddmm(day.date)}`, w, { b: true, jc: "center", vm: "restart" })
+              : cell("", w, { vm: "cont" }),
+          session: (w) => (i === 0 ? cell(s.label, w, { jc: "center", vm: "restart" }) : cell("", w, { vm: "cont" })),
+          period: (w) => cell(r.period, w, { jc: "center" }),
+          cls: (w) => cell(r.cls, w, { jc: "center" }),
+          lesson: (w) => cell(r.lesson, w),
+          ppct: (w) => cell(r.ppct, w, { jc: "center" }),
+          // Các tiết liền nhau trong buổi có cùng đồ dùng thì gộp ô
+          materials: (w) =>
+            i > 0 && s.rows[i - 1].materialsText === r.materialsText
+              ? cell("", w, { vm: "cont" })
+              : cell(r.materialsText, w, { jc: "center", vm: "restart" }),
+          nls: (w) => cell(r.nls, w, { jc: "center" }),
+        };
         x += "<w:tr><w:trPr><w:cantSplit/></w:trPr>";
-        x += firstOfDay
-          ? cell(`${DAYS_UPPER[day.d].replace(" ", "\n")}\n${ddmm(day.date)}`, W[0], { b: true, jc: "center", vm: "restart" })
-          : cell("", W[0], { vm: "cont" });
-        x += i === 0 ? cell(s.label, W[1], { jc: "center", vm: "restart" }) : cell("", W[1], { vm: "cont" });
-        x += cell(r.period, W[2], { jc: "center" });
-        x += cell(r.cls, W[3], { jc: "center" });
-        x += cell(r.lesson, W[4]);
-        x += cell(r.ppct, W[5], { jc: "center" });
-        x += i === 0 ? cell(r.materials, W[6], { jc: "center", vm: "restart" }) : cell("", W[6], { vm: "cont" });
-        x += cell(r.nls, W[7], { jc: "center" });
+        x += cols.map((c, j) => tc[c.key](W[j])).join("");
         x += "</w:tr>";
         firstOfDay = false;
       })
@@ -86,18 +110,20 @@ function weekBody(state, week) {
     `<w:tr>${[a, b].map((t) => `<w:tc><w:tcPr><w:tcW w:w="${half}" w:type="dxa"/></w:tcPr>${para(run(t, { b: true }), { jc: "center" })}</w:tc>`).join("")}</w:tr>`;
   x += para("", { before: 240 });
   x += `<w:tbl><w:tblPr><w:tblW w:w="${half * 2}" w:type="dxa"/><w:tblLayout w:type="fixed"/><w:tblBorders>${borders("nil")}</w:tblBorders></w:tblPr><w:tblGrid><w:gridCol w:w="${half}"/><w:gridCol w:w="${half}"/></w:tblGrid>`;
-  x += sigRow("GVBM", "TỔ TRƯỞNG") + sigRow("", "") + sigRow("", "") + sigRow("", "") + sigRow(cfg.teacher, cfg.leader);
+  x += sigRow("GIÁO VIÊN", "TỔ TRƯỞNG CHUYÊN MÔN") + sigRow("", "") + sigRow("", "") + sigRow("", "") + sigRow(cfg.teacher, cfg.leader);
   x += "</w:tbl>";
   return x;
 }
 
 // Nhiều tuần trong một file, mỗi tuần bắt đầu ở trang mới
-export function buildDocxParts(state, weeks) {
+export function buildDocxParts(state, weeks, options = DEFAULT_EXPORT_OPTIONS) {
+  const opts = normalizeExportOptions(options);
   const PAGE_BREAK = '<w:p><w:r><w:br w:type="page"/></w:r></w:p>';
-  const x = weeks.map((w) => weekBody(state, w)).join(PAGE_BREAK);
+  const x = weeks.map((w) => weekBody(state, w, opts)).join(PAGE_BREAK);
 
-  // Khổ A4 dọc, lề trái 2cm, lề phải 1,5cm
-  const sect = `<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="850" w:bottom="1134" w:left="1134" w:header="567" w:footer="567" w:gutter="0"/></w:sectPr>`;
+  const pg = PAGE[opts.orientation];
+  const orient = opts.orientation === "landscape" ? ' w:orient="landscape"' : "";
+  const sect = `<w:sectPr><w:pgSz w:w="${pg.w}" w:h="${pg.h}"${orient}/><w:pgMar w:top="${MARGIN.top}" w:right="${MARGIN.right}" w:bottom="${MARGIN.bottom}" w:left="${MARGIN.left}" w:header="567" w:footer="567" w:gutter="0"/></w:sectPr>`;
 
   return {
     "[Content_Types].xml":
@@ -108,9 +134,9 @@ export function buildDocxParts(state, weeks) {
   };
 }
 
-export async function exportWord(state, weeks, label) {
+export async function exportWord(state, weeks, label, options = DEFAULT_EXPORT_OPTIONS) {
   const zip = new JSZip();
-  Object.entries(buildDocxParts(state, weeks)).forEach(([path, content]) => zip.file(path, content));
+  Object.entries(buildDocxParts(state, weeks, options)).forEach(([path, content]) => zip.file(path, content));
   const blob = await zip.generateAsync({
     type: "blob",
     mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",

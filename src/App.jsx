@@ -11,6 +11,8 @@ import TimetableTab from "./components/TimetableTab.jsx";
 import InfoTab from "./components/InfoTab.jsx";
 import PpctTab from "./components/PpctTab.jsx";
 import Toast, { useToast } from "./components/Toast.jsx";
+import ExportDialog from "./components/ExportDialog.jsx";
+import { DEFAULT_EXPORT_OPTIONS, normalizeExportOptions } from "./utils/exportOptions.js";
 
 const MAX_WEEK = 35;
 const HK1_END = 18; // Học kì I: tuần 1–18, học kì II: tuần 19–35
@@ -41,6 +43,9 @@ export default function App() {
   const [state, setState, saved] = usePersistentState("khgd-state-v1", defaultState, mergeState);
   const [week, setWeekRaw] = usePersistentState("khgd-week", 1);
   const [scope, setScope] = usePersistentState("khgd-export", { mode: "week", from: 1, to: 4 });
+  const [exportOpts, setExportOpts] = usePersistentState("khgd-export-options", DEFAULT_EXPORT_OPTIONS, normalizeExportOptions);
+  const [dialog, setDialog] = useState(null); // "word" | "excel" khi đang mở hộp thoại tùy chọn xuất
+  const closeDialog = useCallback(() => setDialog(null), []);
   const [tab, setTab] = useState("plan");
   const [toast, notify] = useToast();
 
@@ -60,10 +65,12 @@ export default function App() {
   const rows = useMemo(() => buildRows(state, week), [state, week]);
   const range = useMemo(() => weekRange(rows, state, week), [rows, state, week]);
 
-  async function handleExport(kind) {
+  async function handleExport(kind, opts) {
+    setDialog(null);
+    setExportOpts(opts);
     try {
       const { weeks, label } = exportWeeks(scope, week);
-      const name = kind === "word" ? await exportWord(state, weeks, label) : exportExcel(state, weeks, label);
+      const name = await (kind === "word" ? exportWord : exportExcel)(state, weeks, label, opts);
       notify(`Đã tải ${name}`);
     } catch (err) {
       console.error(err);
@@ -81,18 +88,21 @@ export default function App() {
         onWeekChange={setWeek}
         scope={scope}
         onScopeChange={setScope}
-        onExportWord={() => handleExport("word")}
-        onExportExcel={() => handleExport("excel")}
+        onExportWord={() => setDialog("word")}
+        onExportExcel={() => setDialog("excel")}
       />
       <Tabs tabs={TABS} active={tab} onChange={setTab} />
       <main>
         {tab === "plan" && (
-          <PlanTab state={state} week={week} rows={rows} update={update} notify={notify} saved={saved} />
+          <PlanTab state={state} week={week} maxWeek={MAX_WEEK} rows={rows} update={update} notify={notify} saved={saved} />
         )}
         {tab === "timetable" && <TimetableTab state={state} update={update} />}
-        {tab === "info" && <InfoTab state={state} update={update} notify={notify} />}
+        {tab === "info" && <InfoTab state={state} update={update} notify={notify} maxWeek={MAX_WEEK} />}
         {tab === "ppct" && <PpctTab />}
       </main>
+      {dialog && (
+        <ExportDialog kind={dialog} initial={exportOpts} onConfirm={(opts) => handleExport(dialog, opts)} onCancel={closeDialog} />
+      )}
       <Toast message={toast} />
     </>
   );

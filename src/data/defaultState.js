@@ -1,4 +1,5 @@
 import { normalizeClassName } from "./ppct.js";
+import { DEFAULT_MATERIAL_LIST, reviveMaterialList } from "../utils/materials.js";
 
 export const DAYS = ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu"];
 export const DAYS_UPPER = ["THỨ HAI", "THỨ BA", "THỨ TƯ", "THỨ NĂM", "THỨ SÁU"];
@@ -29,12 +30,12 @@ export function defaultState() {
       year: "2026-2027",
       teacher: "Lê Thị Phương Thảo",
       leader: "Lê Thị Thảo",
-      materials: "Computer, extraboard, textbook.",
+      materialList: DEFAULT_MATERIAL_LIST.map((m) => ({ ...m })),
       week1: "2026-09-07",
       classes: ["1A", "1B", "1C", "1D", "1E", "2A", "2B", "2C", "2D", "2E", "3A"].map((name) => ({ name, offset: 0 })),
       timetable,
     },
-    // weeks[n] = { monday: "YYYY-MM-DD" | "", ov: { [slotKey]: { ppct?, lesson?, nls?, materials? } } }
+    // weeks[n] = { monday: "YYYY-MM-DD" | "", ov: { [slotKey]: { ppct?, lesson?, nls?, materials?: string[] } } }
     weeks: {},
   };
 }
@@ -48,6 +49,8 @@ export function mergeState(saved) {
   config.classes = config.classes
     .map((c) => ({ ...c, name: normalizeClassName(c.name) }))
     .filter((c) => !seen.has(c.name) && seen.add(c.name));
+  // Dữ liệu cũ chỉ có dòng chữ "materials": chuyển thành danh sách đồ dùng
+  config.materialList = reviveMaterialList(saved.config && saved.config.materialList, saved.config && saved.config.materials);
   config.timetable = Object.fromEntries(Object.entries(config.timetable).map(([k, v]) => [k, normalizeClassName(v)]));
   return { config, weeks: saved.weeks || {} };
 }

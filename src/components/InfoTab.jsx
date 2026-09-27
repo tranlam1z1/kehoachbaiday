@@ -1,16 +1,16 @@
 import { useState } from "react";
 import { gradeOf, isPractice, normalizeClassName } from "../data/ppct.js";
+import MaterialsManager from "./MaterialsManager.jsx";
 
 const FIELDS = [
   { key: "school", label: "Tên trường" },
   { key: "year", label: "Năm học" },
   { key: "teacher", label: "Giáo viên bộ môn" },
   { key: "leader", label: "Tổ trưởng" },
-  { key: "materials", label: "Đồ dùng dạy học mặc định" },
   { key: "week1", label: "Thứ Hai của tuần 1", type: "date" },
 ];
 
-export default function InfoTab({ state, update, notify }) {
+export default function InfoTab({ state, update, notify, maxWeek }) {
   const { config } = state;
   const [newClass, setNewClass] = useState("");
 
@@ -115,6 +115,8 @@ export default function InfoTab({ state, update, notify }) {
           Thêm lớp
         </button>
       </div>
+
+      <MaterialsManager state={state} update={update} notify={notify} maxWeek={maxWeek} />
     </section>
   );
 }
