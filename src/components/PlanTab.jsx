@@ -72,7 +72,7 @@ export default function PlanTab({ state, week, rows, update, notify, saved }) {
   }
 
   const notes = [];
-  const unknown = [...new Set(rows.filter((r) => !r.grade).map((r) => r.cls))];
+  const unknown = [...new Set(rows.filter((r) => !r.grade && !r.practice).map((r) => r.cls))];
   if (unknown.length) notes.push(`Chưa có PPCT cho ${unknown.join(", ")}. Cô có thể gõ tên bài trực tiếp.`);
   const over = [...new Set(rows.filter((r) => r.outOfRange).map((r) => r.cls))];
   if (over.length)

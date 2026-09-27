@@ -13,6 +13,22 @@ import PpctTab from "./components/PpctTab.jsx";
 import Toast, { useToast } from "./components/Toast.jsx";
 
 const MAX_WEEK = 35;
+const HK1_END = 18; // Học kì I: tuần 1–18, học kì II: tuần 19–35
+
+// Danh sách tuần và tên file theo phạm vi xuất đã chọn
+function exportWeeks(scope, week) {
+  const span = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
+  if (scope.mode === "hk1") return { weeks: span(1, HK1_END), label: "HỌC KÌ I" };
+  if (scope.mode === "hk2") return { weeks: span(HK1_END + 1, MAX_WEEK), label: "HỌC KÌ II" };
+  if (scope.mode === "year") return { weeks: span(1, MAX_WEEK), label: "CẢ NĂM" };
+  if (scope.mode === "range") {
+    const clamp = (n) => Math.max(1, Math.min(MAX_WEEK, Math.round(Number(n) || 1)));
+    const a = Math.min(clamp(scope.from), clamp(scope.to));
+    const b = Math.max(clamp(scope.from), clamp(scope.to));
+    return { weeks: span(a, b), label: a === b ? `TUẦN ${a}` : `TUẦN ${a}-${b}` };
+  }
+  return { weeks: [week], label: `TUẦN ${week}` };
+}
 
 const TABS = [
   { id: "plan", label: "Kế hoạch tuần" },
@@ -24,6 +40,7 @@ const TABS = [
 export default function App() {
   const [state, setState, saved] = usePersistentState("khgd-state-v1", defaultState, mergeState);
   const [week, setWeekRaw] = usePersistentState("khgd-week", 1);
+  const [scope, setScope] = usePersistentState("khgd-export", { mode: "week", from: 1, to: 4 });
   const [tab, setTab] = useState("plan");
   const [toast, notify] = useToast();
 
@@ -45,7 +62,8 @@ export default function App() {
 
   async function handleExport(kind) {
     try {
-      const name = kind === "word" ? await exportWord(state, week) : exportExcel(state, week);
+      const { weeks, label } = exportWeeks(scope, week);
+      const name = kind === "word" ? await exportWord(state, weeks, label) : exportExcel(state, weeks, label);
       notify(`Đã tải ${name}`);
     } catch (err) {
       console.error(err);
@@ -61,6 +79,8 @@ export default function App() {
         maxWeek={MAX_WEEK}
         range={range}
         onWeekChange={setWeek}
+        scope={scope}
+        onScopeChange={setScope}
         onExportWord={() => handleExport("word")}
         onExportExcel={() => handleExport("excel")}
       />

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { gradeOf } from "../data/ppct.js";
+import { gradeOf, isPractice, normalizeClassName } from "../data/ppct.js";
 
 const FIELDS = [
   { key: "school", label: "Tên trường" },
@@ -37,7 +37,7 @@ export default function InfoTab({ state, update, notify }) {
   }
 
   function addClass() {
-    const n = newClass.trim().toUpperCase();
+    const n = normalizeClassName(newClass);
     if (!n) return;
     if (config.classes.some((c) => c.name === n)) return notify(`Lớp ${n} đã có trong danh sách.`);
     update((s) => {
@@ -82,7 +82,7 @@ export default function InfoTab({ state, update, notify }) {
                   <td>
                     <b>{c.name}</b>
                   </td>
-                  <td>{g ? `Khối ${g}` : <span className="warn-text">Chưa có PPCT</span>}</td>
+                  <td>{g ? `Khối ${g}` : isPractice(c.name) ? "Luyện Anh (LA, ngoài PPCT)" : <span className="warn-text">Chưa có PPCT</span>}</td>
                   <td>
                     <input
                       type="number"

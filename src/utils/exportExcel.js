@@ -62,18 +62,21 @@ export function buildSheet(state, week) {
   return { aoa, merges, centered, cols: [8, 10, 8, 8, 44, 10, 30, 22].map((wch) => ({ wch })) };
 }
 
-export function exportExcel(state, week) {
-  const { aoa, merges, centered, cols } = buildSheet(state, week);
-  const ws = XLSX.utils.aoa_to_sheet(aoa);
-  centered.forEach((ref) => {
-    if (ws[ref]) ws[ref].s = { alignment: { horizontal: "center", vertical: "center", wrapText: true } };
-  });
-  ws["!merges"] = merges;
-  ws["!cols"] = cols;
+// Mỗi tuần một sheet
+export function exportExcel(state, weeks, label) {
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, `Tuần ${week}`);
+  weeks.forEach((week) => {
+    const { aoa, merges, centered, cols } = buildSheet(state, week);
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    centered.forEach((ref) => {
+      if (ws[ref]) ws[ref].s = { alignment: { horizontal: "center", vertical: "center", wrapText: true } };
+    });
+    ws["!merges"] = merges;
+    ws["!cols"] = cols;
+    XLSX.utils.book_append_sheet(wb, ws, `Tuần ${week}`);
+  });
   const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-  const filename = `KHGD TUẦN ${week}.xlsx`;
+  const filename = `KHGD ${label}.xlsx`;
   downloadBlob(new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), filename);
   return filename;
 }

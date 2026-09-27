@@ -48,7 +48,11 @@ h1{font-family:var(--hand);font-weight:400;color:var(--ink);font-size:clamp(30px
 .icon-btn{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--surface);cursor:pointer;display:grid;place-items:center;color:var(--ink);font-size:16px}
 .icon-btn:hover{background:var(--ink-soft)}
 .range{font-size:14px;color:var(--text);margin:6px 0 0}
-.actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.scope{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.scope select,.scope input{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface)}
+.scope-range{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.scope-range input{width:4.5em;padding:8px 6px}
 .btn{border-radius:8px;padding:9px 16px;font-weight:600;cursor:pointer;border:1.5px solid var(--ink);background:var(--surface);color:var(--ink)}
 .btn.primary{background:var(--ink);color:var(--ink-on)}
 .btn:disabled{opacity:.45;cursor:not-allowed}

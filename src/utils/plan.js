@@ -1,4 +1,4 @@
-import { PPCT, gradeOf } from "../data/ppct.js";
+import { PPCT, PRACTICE_LESSON, gradeOf, isPractice } from "../data/ppct.js";
 import { DAYS, SESSIONS, slotKey } from "../data/defaultState.js";
 import { parseDate, addDays } from "./date.js";
 
@@ -32,6 +32,7 @@ export function buildRows(state, week) {
 
         count[cls] = (count[cls] || 0) + 1;
         const g = gradeOf(cls);
+        const practice = isPractice(cls);
         const o = ov[key] || {};
         // Tiết PPCT tự động = số tiết các tuần trước + thứ tự lần gặp lớp trong tuần + số tiết lệch
         const autoPpct = g ? (week - 1) * PPCT[g].perWeek + count[cls] + (offsets[cls] || 0) : null;
@@ -40,7 +41,7 @@ export function buildRows(state, week) {
         const item = g && ppct >= 1 ? PPCT[g].items[ppct - 1] : null;
         const auto = {
           // Kế hoạch dùng tên gọn "Unit 1: Lesson 1 (1,2)"; bảng PPCT vẫn giữ tên đầy đủ
-          lesson: item ? item.short || item.name : "",
+          lesson: practice ? PRACTICE_LESSON : item ? item.short || item.name : "",
           nls: item ? item.nls : "",
           materials: cfg.materials,
         };
@@ -54,6 +55,7 @@ export function buildRows(state, week) {
           period: t,
           cls,
           grade: g,
+          practice,
           autoPpct,
           auto,
           ppct: ppct == null ? "" : ppct,

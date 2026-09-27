@@ -1,3 +1,5 @@
+import { normalizeClassName } from "./ppct.js";
+
 export const DAYS = ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu"];
 export const DAYS_UPPER = ["THỨ HAI", "THỨ BA", "THỨ TƯ", "THỨ NĂM", "THỨ SÁU"];
 export const SESSIONS = [
@@ -40,5 +42,12 @@ export function defaultState() {
 export function mergeState(saved) {
   const d = defaultState();
   if (!saved || typeof saved !== "object") return d;
-  return { config: { ...d.config, ...(saved.config || {}) }, weeks: saved.weeks || {} };
+  const config = { ...d.config, ...(saved.config || {}) };
+  // Đổi tên lớp kiểu cũ "5A (LUYỆN ANH)" sang "5A LA", cả trong danh sách lớp và thời khóa biểu
+  const seen = new Set();
+  config.classes = config.classes
+    .map((c) => ({ ...c, name: normalizeClassName(c.name) }))
+    .filter((c) => !seen.has(c.name) && seen.add(c.name));
+  config.timetable = Object.fromEntries(Object.entries(config.timetable).map(([k, v]) => [k, normalizeClassName(v)]));
+  return { config, weeks: saved.weeks || {} };
 }

@@ -1,5 +1,5 @@
-// Phân phối chương trình Tiếng Anh lớp 1, 2, 3, 4 — năm học 2026-2027
-// Mã NLS viết gọn: "1.1" = "1.1.CB1a", "2.2b" = "2.2.CB1b" (lớp 4 dùng CB2). Mã đầy đủ (có "CB") giữ nguyên.
+// Phân phối chương trình Tiếng Anh lớp 1, 2, 3, 4, 5 — năm học 2026-2027
+// Mã NLS viết gọn: "1.1" = "1.1.CB1a", "2.2b" = "2.2.CB1b" (lớp 4, 5 dùng CB2). Mã đầy đủ (có "CB") giữ nguyên.
 
 export function expandNls(tokens, level = 1) {
   return tokens
@@ -158,15 +158,81 @@ function buildGrade4() {
   return out;
 }
 
+// Global Success 5 (140 tiết), mã NLS mức CB2
+function buildGrade5() {
+  const out = [];
+  const push = (name, code, short) => out.push({ name, short, nls: expandNls(code, 2) });
+  const L = ["Lesson 1 (1,2,3)", "Lesson 1 (4,5,6)", "Lesson 2 (1,2,3)", "Lesson 2 (4,5,6)", "Lesson 3 (1,2,3)", "Lesson 3 (4,5,6)"];
+  const unit = (n, title, codes) => codes.split("|").forEach((c, i) => push(`Unit ${n}: ${title} – ${L[i]}`, c, `Unit ${n}: ${L[i]}`));
+  const review = (n, a, b, e) => {
+    push(`Review ${n}: Part 1 (Activity 1-2)`, a);
+    push(`Review ${n}: Part 2 (Activity 3-5)`, b);
+    push(`Review ${n}: Extension activities`, e);
+  };
+
+  push("Làm quen chương trình SGK lớp 5", "1.1a");
+  push("Starter: A. Back to school", "2.5a");
+  push("Starter: B. Last summer", "2.1a");
+  push("Starter: C. Classroom instructions", "1.1d");
+  unit(1, "All about me", "1.1b|2.6a|2.1b|1.2a|1.1c|3.1a");
+  unit(2, "Our new friends", "2.1a|1.3b|2.5c|1.2a|1.1d|3.2a");
+  unit(3, "My foreign friends", "1.1b|2.5b|2.1b|5.2c|1.1c|2.4a");
+  unit(4, "Our free time", "1.1a|4.3a|2.1a|1.2a|1.1d|3.1a");
+  unit(5, "My future job", "1.1b|2.6a|2.1a|1.2a|1.1c|3.1b");
+  review(1, "1.3a", "5.4a", "3.2a");
+  unit(6, "Our school rooms", "1.1a|4.1a|2.3a|1.2a|1.1d|3.2a");
+  unit(7, "Our favourite school activities", "1.1b|2.2b|2.1b|1.2a|2.1a|3.1a");
+  unit(8, "In our classroom", "2.1a|3.1a|3.2a|1.2a|1.1c|2.4a");
+  unit(9, "Our outdoor activities", "2.1a|3.1a|3.2a|4.3b|1.1d|2.2a");
+  unit(10, "Our school trip", "2.1a|3.1a|3.2a|1.3b|1.1c|2.4a");
+  review(2, "2.1a", "3.1a", "3.2a");
+  push("Kiểm tra học kì I: Làm bài kiểm tra", "5.1a");
+  push("Kiểm tra học kì I: Chữa bài", "5.4a");
+  unit(11, "Family time", "2.1a|3.1a|3.2a|1.2a|1.1d|2.2a");
+  unit(12, "Our Tet holiday", "2.1a|3.1a|3.2a|1.2a|1.1c|2.5c");
+  unit(13, "Our special days", "2.1a|3.1a|3.2a|1.2a|1.1d|2.4a");
+  unit(14, "Staying healthy", "2.1a|3.1a|3.2a|4.3a|1.1d|2.2b");
+  unit(15, "Our health", "2.1a|3.1a|3.2a|1.2a|1.1c|5.4a");
+  review(3, "2.1a", "3.1a", "3.2a");
+  unit(16, "Seasons and the weather", "2.1a|3.1a|3.2a|1.1b|1.1d|4.4a");
+  unit(17, "Stories for children", "2.1a|3.1a|3.2a|1.2a|1.1c|2.3b");
+  unit(18, "Means of transport", "2.1a|3.1a|3.2a|1.2a|4.4a|2.4a");
+  unit(19, "Places of interest", "2.1a|3.1a|3.2a|2.5a|1.1c|2.2a");
+  unit(20, "Our summer holiday", "2.1a|3.1a|3.2a|5.4b|1.1d|2.4a");
+  review(4, "2.1a", "3.1a", "3.2a");
+  push("Kiểm tra học kì II: Làm bài kiểm tra", "5.1a");
+  push("Kiểm tra học kì II: Chữa bài", "5.4b");
+  return out;
+}
+
 export const PPCT = {
   1: { book: "Global Success 1", perWeek: 2, items: buildGlobalSuccess(G1_UNITS, G1_CODES, "4,5", false) },
   2: { book: "Global Success 2", perWeek: 2, items: buildGlobalSuccess(G2_UNITS, G2_CODES, "4,5,6", true) },
   3: { book: "Wonderful World 3", perWeek: 4, items: buildGrade3() },
   4: { book: "Global Success 4", perWeek: 4, items: buildGrade4() },
+  5: { book: "Global Success 5", perWeek: 4, items: buildGrade5() },
 };
 
-// Khối được lấy theo chữ số đầu của tên lớp: "3A" -> 3
+// Tiết luyện Anh ngoài PPCT, ghi tên lớp dạng "5A LA"
+export const PRACTICE_LESSON = "Luyện Anh";
+
+// Chuẩn hóa tên lớp: viết hoa, "5a (luyện anh)" hoặc "5A luyện anh" -> "5A LA"
+export function normalizeClassName(name) {
+  return String(name)
+    .normalize("NFC")
+    .trim()
+    .toUpperCase()
+    .replace(/\s*\(?\s*LUYỆN\s+ANH\s*\)?$/, " LA")
+    .replace(/\s+/g, " ");
+}
+
+export function isPractice(cls) {
+  return /^\S+ LA$/.test(normalizeClassName(cls));
+}
+
+// Khối được lấy theo chữ số đầu của tên lớp: "3A" -> 3. Lớp luyện Anh không theo PPCT.
 export function gradeOf(cls) {
+  if (isPractice(cls)) return null;
   const g = parseInt(String(cls).trim()[0], 10);
   return PPCT[g] ? g : null;
 }

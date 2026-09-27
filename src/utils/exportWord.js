@@ -30,7 +30,8 @@ function cell(content, width, o = {}) {
   return `<w:tc><w:tcPr><w:tcW w:w="${width}" w:type="dxa"/>${vMerge}${shade}<w:vAlign w:val="center"/></w:tcPr>${body}</w:tc>`;
 }
 
-export function buildDocxParts(state, week) {
+// Nội dung một tuần: tiêu đề, bảng kế hoạch, phần ký tên
+function weekBody(state, week) {
   const cfg = state.config;
   const rows = buildRows(state, week);
   const rg = weekRange(rows, state, week);
@@ -87,6 +88,13 @@ export function buildDocxParts(state, week) {
   x += `<w:tbl><w:tblPr><w:tblW w:w="${half * 2}" w:type="dxa"/><w:tblLayout w:type="fixed"/><w:tblBorders>${borders("nil")}</w:tblBorders></w:tblPr><w:tblGrid><w:gridCol w:w="${half}"/><w:gridCol w:w="${half}"/></w:tblGrid>`;
   x += sigRow("GVBM", "TỔ TRƯỞNG") + sigRow("", "") + sigRow("", "") + sigRow("", "") + sigRow(cfg.teacher, cfg.leader);
   x += "</w:tbl>";
+  return x;
+}
+
+// Nhiều tuần trong một file, mỗi tuần bắt đầu ở trang mới
+export function buildDocxParts(state, weeks) {
+  const PAGE_BREAK = '<w:p><w:r><w:br w:type="page"/></w:r></w:p>';
+  const x = weeks.map((w) => weekBody(state, w)).join(PAGE_BREAK);
 
   // Khổ A4 dọc, lề trái 2cm, lề phải 1,5cm
   const sect = `<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="850" w:bottom="1134" w:left="1134" w:header="567" w:footer="567" w:gutter="0"/></w:sectPr>`;
@@ -100,14 +108,14 @@ export function buildDocxParts(state, week) {
   };
 }
 
-export async function exportWord(state, week) {
+export async function exportWord(state, weeks, label) {
   const zip = new JSZip();
-  Object.entries(buildDocxParts(state, week)).forEach(([path, content]) => zip.file(path, content));
+  Object.entries(buildDocxParts(state, weeks)).forEach(([path, content]) => zip.file(path, content));
   const blob = await zip.generateAsync({
     type: "blob",
     mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   });
-  const filename = `KHGD TUẦN ${week}.docx`;
+  const filename = `KHGD ${label}.docx`;
   downloadBlob(blob, filename);
   return filename;
 }

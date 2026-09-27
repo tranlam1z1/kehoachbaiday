@@ -1,7 +1,17 @@
 import { useEffect, useState } from "react";
 import { ddmmyyyy } from "../utils/date.js";
 
-export default function Header({ config, week, maxWeek, range, onWeekChange, onExportWord, onExportExcel }) {
+const SCOPES = [
+  { value: "week", label: "Tuần đang xem" },
+  { value: "range", label: "Từ tuần … đến tuần …" },
+  { value: "hk1", label: "Học kì I" },
+  { value: "hk2", label: "Học kì II" },
+  { value: "year", label: "Cả năm" },
+];
+
+export default function Header({ config, week, maxWeek, range, onWeekChange, scope, onScopeChange, onExportWord, onExportExcel }) {
+  const setScope = (patch) => onScopeChange({ ...scope, ...patch });
+
   const [draft, setDraft] = useState(String(week));
   useEffect(() => setDraft(String(week)), [week]);
 
@@ -32,6 +42,23 @@ export default function Header({ config, week, maxWeek, range, onWeekChange, onE
           </button>
         </div>
         <div className="actions">
+          <div className="scope">
+            <select value={scope.mode} aria-label="Phạm vi xuất" onChange={(e) => setScope({ mode: e.target.value })}>
+              {SCOPES.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+            {scope.mode === "range" && (
+              <span className="scope-range">
+                từ
+                <input type="number" min="1" max={maxWeek} value={scope.from} aria-label="Từ tuần" onChange={(e) => setScope({ from: e.target.value })} />
+                đến
+                <input type="number" min="1" max={maxWeek} value={scope.to} aria-label="Đến tuần" onChange={(e) => setScope({ to: e.target.value })} />
+              </span>
+            )}
+          </div>
           <button className="btn primary" onClick={onExportWord}>
             Xuất Word
           </button>
