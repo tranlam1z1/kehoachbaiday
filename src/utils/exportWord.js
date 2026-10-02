@@ -1,9 +1,9 @@
 import JSZip from "jszip";
 import { DAYS_UPPER } from "../data/defaultState.js";
-import { buildRows, groupRows } from "./plan.js";
+import { buildRows, groupRows, weekRange } from "./plan.js";
 import { ddmm } from "./date.js";
 import { downloadBlob } from "./download.js";
-import { DEFAULT_EXPORT_OPTIONS, normalizeExportOptions, planColumns, fitWidths, schoolYearLine } from "./exportOptions.js";
+import { DEFAULT_EXPORT_OPTIONS, normalizeExportOptions, planColumns, fitWidths, weekDateLine } from "./exportOptions.js";
 
 // Tạo file .docx bằng cách tự viết WordprocessingML rồi nén bằng JSZip
 
@@ -63,7 +63,7 @@ function weekBody(state, week, opts) {
     );
   }
   x += para(run(`KẾ HOẠCH GIẢNG DẠY TUẦN ${week}`, { b: true, sz: 30 }), { jc: "center", before: topLine ? 240 : 0 });
-  x += para(run(schoolYearLine(cfg.year), { i: true }), { jc: "center", after: 200 });
+  x += para(run(weekDateLine(weekRange(rows, state, week)), { i: true }), { jc: "center", after: 200 });
 
   x += `<w:tbl><w:tblPr><w:tblW w:w="${TW}" w:type="dxa"/><w:tblLayout w:type="fixed"/><w:tblBorders>${borders()}</w:tblBorders><w:tblCellMar><w:left w:w="70" w:type="dxa"/><w:right w:w="70" w:type="dxa"/></w:tblCellMar></w:tblPr>`;
   x += `<w:tblGrid>${W.map((w) => `<w:gridCol w:w="${w}"/>`).join("")}</w:tblGrid>`;

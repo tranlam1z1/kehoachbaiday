@@ -1,5 +1,7 @@
 // Tùy chọn khi xuất file và cách chia độ rộng cột cho vừa bề ngang trang
 
+import { ddmmyyyy } from "./date.js";
+
 export const DEFAULT_EXPORT_OPTIONS = { orientation: "portrait", showNls: true, showSchool: true, showYear: true };
 
 // Chuẩn hóa tùy chọn (dữ liệu cũ trong localStorage có thể thiếu hoặc sai kiểu)
@@ -24,8 +26,8 @@ const COLUMNS = [
   { key: "nls", title: "Nội dung tích hợp" },
 ];
 
-// Dòng dưới tiêu đề khi xuất file: "2026-2027" -> "Năm học 2026 - 2027"
-export const schoolYearLine = (year) => `Năm học ${String(year ?? "").trim().replace(/\s*[-–]\s*/, " - ")}`;
+// Dòng dưới tiêu đề khi xuất file: "(Từ ngày 21/09/2026 đến ngày 25/09/2026)"
+export const weekDateLine = ({ from, to }) => `(Từ ngày ${ddmmyyyy(from)} đến ngày ${ddmmyyyy(to)})`;
 
 // Các cột của bảng kế hoạch theo tùy chọn
 export function planColumns(opts) {
